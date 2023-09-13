@@ -30,6 +30,14 @@ io.on('connection', (socket) => {
     console.log('ID Studio:', data.studioId)
 
     studioManager.addUserToStudio(data.studioId, data.userId, socket.id, data.path)
+
+    const connectedUsers = studioManager.getConnectedUsersInStudio(data.studioId)
+    connectedUsers.forEach(userId => {
+      if (userId !== data.userId) {
+        const userSocketId = studioManager.getUserSocketIdInStudio(data.studioId, userId)
+        io.to(userSocketId).emit('userPathChanged', { userId: data.userId, path: data.path })
+      }
+    })
   })
 
   socket.on('updateStatus', (data) => {
@@ -38,6 +46,21 @@ io.on('connection', (socket) => {
     console.log('ID Studio:', data.studioId)
 
     studioManager.updateUserStatus(data.studioId, data.userId, data.status)
+
+    const connectedUsers = studioManager.getConnectedUsersInStudio(data.studioId)
+
+    connectedUsers.forEach(userId => {
+      if (userId !== data.userId) {
+        const userSocketId = studioManager.getUserSocketIdInStudio(data.studioId, userId)
+        io.to(userSocketId).emit('userStatusChanged', { userId: data.userId, newStatus: data.status, path: data.path })
+      }
+    })
+  })
+
+  socket.on('requestConnectedUsers', (data) => {
+    const studioId = data.studioId
+    const connectedUsers = studioManager.getConnectedUsersInStudio(studioId)
+    socket.emit('connectedUsersList', connectedUsers)
   })
 
   socket.on('disconnect', () => {

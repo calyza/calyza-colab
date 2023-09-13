@@ -27,9 +27,18 @@ function getConnectedUsersInStudio (studioId) {
   return studios[studioId] ? Object.keys(studios[studioId]) : []
 }
 
+function getUserSocketIdInStudio (studioId, userId) {
+  const studio = studios[studioId]
+  if (studio && studio[userId]) {
+    return studio[userId].socketId
+  }
+  return null
+}
+
 module.exports = {
   addUserToStudio,
   removeUserFromStudio,
   getConnectedUsersInStudio,
-  updateUserStatus
+  updateUserStatus,
+  getUserSocketIdInStudio
 }
