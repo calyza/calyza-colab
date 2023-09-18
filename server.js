@@ -2,7 +2,8 @@ const express = require('express')
 const http = require('http')
 const socketIo = require('socket.io')
 const cors = require('cors')
-const studioManager = require('./studio-manager/manager')
+const studioManager = require('./studio/manager')
+const chatsManager = require('./studio/chats')
 
 const app = express()
 const server = http.createServer(app)
@@ -66,6 +67,23 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Un usuario se ha desconectado')
     studioManager.removeUserFromStudio(socket.id)
+  })
+
+  socket.on('startChat', (data) => {
+    const chatId = chatsManager.generateUniqueChatId(data.userIds)
+    socket.join(chatId)
+
+    data.userIds.forEach(userId => {
+      const socketId = studioManager.getUserSocketIdInStudio(data.studioId, userId)
+      socket.to(socketId).emit('chatStarted', data.userIds)
+    })
+  })
+
+  socket.on('sendMessage', (data) => {
+    data.userIds.forEach(userId => {
+      const socketId = studioManager.getUserSocketIdInStudio(data.studioId, userId)
+      socket.to(socketId).emit('messageReceived', { message: data.message })
+    })
   })
 })
 
